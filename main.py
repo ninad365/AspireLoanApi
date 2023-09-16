@@ -1,52 +1,20 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel
-from sqlalchemy import ForeignKey, create_engine, Column, Integer, String, or_
-from sqlalchemy.orm import sessionmaker, relationship, Session
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import create_engine, or_
+from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 import jwt
+import os
+from app.model import User, Item, UserCreate, ItemCreate
+from app.db import SessionLocal
+from dotenv import load_dotenv
 
 app = FastAPI()
 
-# Database Configuration
-DATABASE_URL = "mysql+mysqlconnector://root:ninad1234@localhost/mydatabase"
-SECRET_KEY = "ahrdkos1b5j3bs9o"
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
+load_dotenv()
 
+SECRET_KEY = os.environ.get("SECRET_KEY")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
-
-# Model Definition
-class Item(Base):
-    __tablename__ = "items"
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(255), index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    user = relationship("User", back_populates="items")
-
-class ItemCreate(BaseModel):
-    name: str
-
-class User(Base):
-    __tablename__ = "users"
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String(255), unique=True, index=True)
-    password = Column(String(255), unique=True, index=True)
-    email = Column(String(255), unique=True, index=True)
-    items = relationship("Item", back_populates="user")
-
-class UserCreate(BaseModel):
-    username: str
-    password: str
-    email: str
-
-class UserLogin(BaseModel):
-    username: str
-    password: str
-
-Base.metadata.create_all(bind=engine)
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
@@ -62,7 +30,10 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
 
 def create_access_token(data: dict):
-    return jwt.encode(data, SECRET_KEY, algorithm="HS256")
+    try:
+        return jwt.encode(data, SECRET_KEY, algorithm="HS256")
+    except:
+        print(SECRET_KEY)
 
 @app.post("/register/")
 async def register_user(user_data: UserCreate):
@@ -142,7 +113,7 @@ async def create_item(item: ItemCreate, current_user: User = Depends(get_current
         return {"message": "Database error: " + str(e)}
     
 # Endpoint to get all items mapped to the logged-in user
-@app.get("/items/", response_model=list[ItemCreate])
+@app.get("/items/")
 async def get_items_for_user(current_user: User = Depends(get_current_user)):
     db = SessionLocal()
     # Query the database to get all items associated with the current user
