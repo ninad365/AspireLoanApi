@@ -2,3 +2,5 @@ fastapi==0.70.0
 uvicorn==0.15.0
 sqlalchemy
 mysql-connector-python
+pyjwt
+python-multipart
