@@ -11,10 +11,8 @@ from app.models.model import (
     LoanView,
     PaymentTerm,
     User,
-    Item,
     Loan,
     UserCreate,
-    ItemCreate,
 )
 from app.db import SessionLocal
 from dotenv import load_dotenv
@@ -120,59 +118,6 @@ def authenticate_user(username: str, password: str, db):
     return user  # Authentication successful
 
 
-# Route to retrieve items
-@app.get("/items/{item_id}")
-async def read_item(item_id: int, current_user: dict = Depends(get_current_user)):
-    try:
-        db = SessionLocal()
-        item = db.query(Item).filter(Item.id == item_id).first()
-        db.close()
-        if item is None:
-            return {"message": "Item not found"}
-        return {
-            "id": item.id,
-            "name": item.name,
-            "current_user": current_user["username"],
-            "user_id": current_user["id"],
-        }
-    except SQLAlchemyError as e:
-        # Handle database-related exceptions here
-        # You can log the error or return an appropriate error response
-        return {"message": "Database error: " + str(e)}
-
-
-# Endpoint to get all items mapped to the logged-in user
-@app.get("/items/")
-async def get_items_for_user(current_user: User = Depends(get_current_user)):
-    db = SessionLocal()
-    # Query the database to get all items associated with the current user
-    items = db.query(Item).filter(Item.user_id == current_user["id"]).all()
-
-    # Convert the items to a list of ItemResponse models for the response
-    items_response = [ItemCreate(name=item.name) for item in items]
-
-    return items_response
-
-
-@app.post("/items/")
-async def create_item(item: ItemCreate, current_user: User = Depends(get_current_user)):
-    try:
-        db = SessionLocal()
-        db_user = db.query(User).filter(User.id == current_user["id"]).first()
-        if db_user is None:
-            db.close()
-            return {"message": "User not found"}
-
-        db_item = Item(name=item.name, user=db_user)
-        db.add(db_item)
-        db.commit()
-        db.refresh(db_item)
-        db.close()
-        return {"message": "Item saved"}
-    except SQLAlchemyError as e:
-        return {"message": "Database error: " + str(e)}
-
-
 # Route to create a new loan
 @app.post("/loans/")
 async def create_loan(
@@ -206,8 +151,10 @@ async def create_loan(
 
 # Endpoint to get all loans mapped to the logged-in user
 @app.get("/loans/")
-async def get_loans_for_user(current_user: User = Depends(get_current_user)):
-    db = SessionLocal()
+async def get_loans_for_user(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)):
+
     # Query the database to get all loans associated with the current user
 
     user = db.query(User).filter(User.id == current_user["id"]).first()
@@ -284,3 +231,55 @@ async def get_pending_payments_with_earliest_due_date(
         }
     else:
         return {"message": "No pending payments with future due dates found."}
+
+
+# Route to retrieve items
+# @app.get("/items/{item_id}")
+# async def read_item(item_id: int, current_user: dict = Depends(get_current_user)):
+#     try:
+#         db = SessionLocal()
+#         item = db.query(Item).filter(Item.id == item_id).first()
+#         db.close()
+#         if item is None:
+#             return {"message": "Item not found"}
+#         return {
+#             "id": item.id,
+#             "name": item.name,
+#             "current_user": current_user["username"],
+#             "user_id": current_user["id"],
+#         }
+#     except SQLAlchemyError as e:
+#         # Handle database-related exceptions here
+#         # You can log the error or return an appropriate error response
+#         return {"message": "Database error: " + str(e)}
+
+
+# Endpoint to get all items mapped to the logged-in user
+# @app.get("/items/")
+# async def get_items_for_user(current_user: User = Depends(get_current_user)):
+#     db = SessionLocal()
+#     # Query the database to get all items associated with the current user
+#     items = db.query(Item).filter(Item.user_id == current_user["id"]).all()
+
+#     # Convert the items to a list of ItemResponse models for the response
+#     items_response = [ItemCreate(name=item.name) for item in items]
+
+#     return items_response
+
+# @app.post("/items/")
+# async def create_item(item: ItemCreate, current_user: User = Depends(get_current_user)):
+#     try:
+#         db = SessionLocal()
+#         db_user = db.query(User).filter(User.id == current_user["id"]).first()
+#         if db_user is None:
+#             db.close()
+#             return {"message": "User not found"}
+
+#         db_item = Item(name=item.name, user=db_user)
+#         db.add(db_item)
+#         db.commit()
+#         db.refresh(db_item)
+#         db.close()
+#         return {"message": "Item saved"}
+#     except SQLAlchemyError as e:
+#         return {"message": "Database error: " + str(e)}

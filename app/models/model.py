@@ -12,17 +12,9 @@ class User(Base):
     password = Column(String(255), unique=True, index=True)
     email = Column(String(255), unique=True, index=True)
     admin = Column(Integer)
-    items = relationship("Item", back_populates="user")
+    # items = relationship("Item", back_populates="user")
     loans = relationship("Loan", back_populates="user")
     payment_status = relationship("PaymentTerm", back_populates="user")
-
-
-class Item(Base):
-    __tablename__ = "items"
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(255), index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    user = relationship("User", back_populates="items")
 
 class Loan(Base):
     __tablename__ = "loans"
@@ -42,9 +34,6 @@ class PaymentTerm(Base):
     payment_status = Column(String(255))
     user_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("User", back_populates="payment_status")
-
-class ItemCreate(BaseModel):
-    name: str
 
 class UserCreate(BaseModel):
     username: str
@@ -69,3 +58,14 @@ class LoanView(BaseModel):
 class UserLogin(BaseModel):
     username: str
     password: str
+
+
+# class Item(Base):
+#     __tablename__ = "items"
+#     id = Column(Integer, primary_key=True, index=True)
+#     name = Column(String(255), index=True)
+#     user_id = Column(Integer, ForeignKey("users.id"))
+#     user = relationship("User", back_populates="items")
+
+# class ItemCreate(BaseModel):
+#     name: str
