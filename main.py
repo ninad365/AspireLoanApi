@@ -5,9 +5,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 import jwt
 import os
-from app.models.model import User, Item, UserCreate, ItemCreate
+from app.models.model import LoanCreate, User, Item, Loan, UserCreate, ItemCreate
 from app.db import SessionLocal
 from dotenv import load_dotenv
+from datetime import datetime
 
 app = FastAPI()
 
@@ -102,6 +103,18 @@ async def read_item(item_id: int, current_user: dict = Depends(get_current_user)
         # You can log the error or return an appropriate error response
         return {"message": "Database error: " + str(e)}
 
+# Endpoint to get all items mapped to the logged-in user
+@app.get("/items/")
+async def get_items_for_user(current_user: User = Depends(get_current_user)):
+    db = SessionLocal()
+    # Query the database to get all items associated with the current user
+    items = db.query(Item).filter(Item.user_id == current_user["id"]).all()
+    
+    # Convert the items to a list of ItemResponse models for the response
+    items_response = [ItemCreate(name=item.name) for item in items]
+    
+    return items_response
+
 @app.post("/items/")
 async def create_item(item: ItemCreate, current_user: User = Depends(get_current_user)):
     try:
@@ -120,14 +133,24 @@ async def create_item(item: ItemCreate, current_user: User = Depends(get_current
     except SQLAlchemyError as e:
         return {"message": "Database error: " + str(e)}
     
-# Endpoint to get all items mapped to the logged-in user
-@app.get("/items/")
-async def get_items_for_user(current_user: User = Depends(get_current_user)):
-    db = SessionLocal()
-    # Query the database to get all items associated with the current user
-    items = db.query(Item).filter(Item.user_id == current_user["id"]).all()
-    
-    # Convert the items to a list of ItemResponse models for the response
-    items_response = [ItemCreate(name=item.name) for item in items]
-    
-    return items_response
+# Route to create a new loan
+@app.post("/loans/")
+async def create_loan(loan_data: LoanCreate, db: Session = Depends(get_db),
+                      current_user: User = Depends(get_current_user)):
+    try:
+        # Create a new loan object
+        new_loan = Loan(amount = loan_data.amount, 
+                        terms = loan_data.terms, 
+                        start_date = datetime.now(),
+                        user_id=current_user["id"],
+                        )
+
+        # Add the new loan to the database
+        db.add(new_loan)
+        db.commit()
+        db.refresh(new_loan)
+
+        return {"Message":"Loan was created"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
