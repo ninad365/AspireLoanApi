@@ -28,17 +28,14 @@ def override_get_db():
 
 app.dependency_overrides[get_db] = override_get_db
 
-# @pytest.fixture()
 def test_read_item():
     response = client.get("/items/1")
     assert response.status_code == 401
 
-# @pytest.fixture()
 def test_create_item():
     response = client.post("/items/", json={"name": "new_item"})
     assert response.status_code == 401
 
-# @pytest.fixture()
 def test_register_user():
     # Define test user data
     test_user_data = {

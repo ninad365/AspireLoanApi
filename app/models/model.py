@@ -19,6 +19,12 @@ class Item(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("User", back_populates="items")
 
+class Loan(Base):
+    __tablename__ = "loans"
+    id = Column(Integer, primary_key=True, index=True)
+    amount = Column(Integer)
+    terms = Column(Integer)
+
 class ItemCreate(BaseModel):
     name: str
 

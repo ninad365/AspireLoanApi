@@ -1,11 +1,11 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from sqlalchemy import create_engine, or_
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 import jwt
 import os
-from app.model import User, Item, UserCreate, ItemCreate
+from app.models.model import User, Item, UserCreate, ItemCreate
 from app.db import SessionLocal
 from dotenv import load_dotenv
 
