@@ -11,6 +11,7 @@ class User(Base):
     username = Column(String(255), unique=True, index=True)
     password = Column(String(255), unique=True, index=True)
     email = Column(String(255), unique=True, index=True)
+    admin = Column(Integer)
     items = relationship("Item", back_populates="user")
     loans = relationship("Loan", back_populates="user")
 
@@ -28,6 +29,7 @@ class Loan(Base):
     amount = Column(Integer)
     terms = Column(Integer)
     start_date = Column(DateTime, default=func.now())
+    approved = Column(Integer)
     user_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("User", back_populates="loans")
 
@@ -42,6 +44,17 @@ class UserCreate(BaseModel):
 class LoanCreate(BaseModel):
     amount: int
     terms: int
+
+class LoanApprove(BaseModel):
+    id: int
+    decision: int
+
+class LoanView(BaseModel):
+    id: int
+    amount: int
+    terms: int
+    approved: int
+    user_id: int
 
 class UserLogin(BaseModel):
     username: str
