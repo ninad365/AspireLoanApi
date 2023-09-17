@@ -9,6 +9,7 @@ from app.models.model import (
     LoanApprove,
     LoanCreate,
     LoanView,
+    PaymentTerm,
     User,
     Item,
     Loan,
@@ -17,7 +18,7 @@ from app.models.model import (
 )
 from app.db import SessionLocal
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime, timedelta
 
 app = FastAPI()
 
@@ -179,25 +180,28 @@ async def create_loan(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    try:
-        # Create a new loan object
-        new_loan = Loan(
-            amount=loan_data.amount,
-            terms=loan_data.terms,
-            start_date=datetime.now(),
-            user_id=current_user["id"],
-            approved=0,
-        )
+    if loan_data.terms > 12:
+        return {"Error": "Please select terms less than or equal to 12."}
+    else:
+        try:
+            # Create a new loan object
+            new_loan = Loan(
+                amount=loan_data.amount,
+                terms=loan_data.terms,
+                start_date=datetime.now(),
+                user_id=current_user["id"],
+                approved=0,
+            )
 
-        # Add the new loan to the database
-        db.add(new_loan)
-        db.commit()
-        db.refresh(new_loan)
+            # Add the new loan to the database
+            db.add(new_loan)
+            db.commit()
+            db.refresh(new_loan)
 
-        return {"Message": "Loan was created. Waiting for approval."}
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
+            return {"Message": "Loan was created. Waiting for approval."}
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(status_code=400, detail=str(e))
 
 
 # Endpoint to get all loans mapped to the logged-in user
@@ -232,6 +236,21 @@ async def get_loans_for_user(loan_data: LoanApprove,
         if loan:
             # Update loan approval status
             loan.approved = loan_data.decision
+
+            # If approved, save the payment terms in the database
+            if loan_data.decision == 1:
+                amount_per_installment = loan.amount / loan.terms
+                date = datetime.now()
+                for i in range(loan.terms):
+                    payment_status = PaymentTerm (
+                        amount = amount_per_installment,
+                        due_date = date + timedelta(days = 7 * (i+1)),
+                        payment_status = "Pending",
+                        user_id = user.id
+                    )
+
+                    db.add(payment_status)
+
             db.commit()
             return {"message": "Loan status updated successfully."}
     else:

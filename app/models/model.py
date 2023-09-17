@@ -14,6 +14,7 @@ class User(Base):
     admin = Column(Integer)
     items = relationship("Item", back_populates="user")
     loans = relationship("Loan", back_populates="user")
+    payment_status = relationship("PaymentTerm", back_populates="user")
 
 
 class Item(Base):
@@ -32,6 +33,15 @@ class Loan(Base):
     approved = Column(Integer)
     user_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("User", back_populates="loans")
+
+class PaymentTerm(Base):
+    __tablename__ = "payment_status"
+    id = Column(Integer, primary_key=True, index=True)
+    amount = Column(Integer)
+    due_date = Column(DateTime)
+    payment_status = Column(String(255))
+    user_id = Column(Integer, ForeignKey("users.id"))
+    user = relationship("User", back_populates="payment_status")
 
 class ItemCreate(BaseModel):
     name: str
