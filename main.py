@@ -246,7 +246,7 @@ async def get_loans_for_user(loan_data: LoanApprove,
                         amount = amount_per_installment,
                         due_date = date + timedelta(days = 7 * (i+1)),
                         payment_status = "Pending",
-                        user_id = user.id
+                        user_id = loan.user_id
                     )
 
                     db.add(payment_status)
@@ -255,3 +255,32 @@ async def get_loans_for_user(loan_data: LoanApprove,
             return {"message": "Loan status updated successfully."}
     else:
         return {"error":"User is not permitted."}
+    
+
+# Endpoint to get pending payments with the earliest due date
+@app.get("/payments/pending-earliest-due-date")
+async def get_pending_payments_with_earliest_due_date(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    # Get the current date and time
+    current_datetime = datetime.now()
+
+    # Query for pending payments with the earliest due date
+    pending_payment = (
+        db.query(PaymentTerm)
+        .filter(PaymentTerm.user_id == current_user["id"])
+        .filter(PaymentTerm.payment_status == "Pending")
+        .filter(PaymentTerm.due_date > current_datetime)
+        .order_by(PaymentTerm.due_date.asc())
+        .first()
+    )
+
+    if pending_payment:
+        return {
+            "amount": pending_payment.amount,
+            "due_date": pending_payment.due_date,
+            "user_id": pending_payment.user_id
+        }
+    else:
+        return {"message": "No pending payments with future due dates found."}
