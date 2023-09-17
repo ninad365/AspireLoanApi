@@ -1,11 +1,8 @@
 from pydantic import BaseModel
 from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
-from app.db import engine
 
-Base = declarative_base()
-Base.metadata.create_all(bind=engine)
+from app.db import Base
 
 class User(Base):
     __tablename__ = "users"

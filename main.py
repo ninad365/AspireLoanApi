@@ -16,6 +16,16 @@ load_dotenv()
 SECRET_KEY = os.environ.get("SECRET_KEY")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
+def get_database_session():
+    return SessionLocal()
+
+def get_db():
+    db = get_database_session()
+    try:
+        yield db
+    finally:
+        db.close()
+
 def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
@@ -36,9 +46,8 @@ def create_access_token(data: dict):
         print(SECRET_KEY)
 
 @app.post("/register/")
-async def register_user(user_data: UserCreate):
+async def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
     # Check if the username or email is already in use
-    db = SessionLocal()
     existing_user = db.query(User).filter(
         or_(User.username == user_data.username, User.email == user_data.email)
     ).first()
@@ -54,13 +63,12 @@ async def register_user(user_data: UserCreate):
     db.refresh(new_user)
     db.close()
 
-    return new_user
+    return {"Success":"New user is created"}
 
 @app.post("/login/", response_model=dict)
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     # Check the username and password
-    db = SessionLocal()
-    user = authenticate_user(db, form_data.username, form_data.password)
+    user = authenticate_user(form_data.username, form_data.password, db)
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username or password")
 
@@ -69,9 +77,10 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 
     return {"access_token": access_token, "token_type": "bearer"}
 
-def authenticate_user(db: Session, username: str, password: str):
+def authenticate_user(username: str, password: str, db):
     # Find the user by username in the database
-    user = db.query(User).filter(User.username == username).first()
+    user = db.query(User).filter(
+        or_(User.username == username)).first()
     if user is None:
         return None  # User not found
     if password != user.password:
@@ -88,7 +97,6 @@ async def read_item(item_id: int, current_user: dict = Depends(get_current_user)
         if item is None:
             return {"message": "Item not found"}
         return {"id": item.id, "name": item.name, "current_user": current_user["username"], "user_id": current_user["id"]}
-
     except SQLAlchemyError as e:
         # Handle database-related exceptions here
         # You can log the error or return an appropriate error response

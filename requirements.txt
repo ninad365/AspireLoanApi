@@ -4,3 +4,5 @@ sqlalchemy
 mysql-connector-python
 pyjwt
 python-multipart
+pytest
+requests
