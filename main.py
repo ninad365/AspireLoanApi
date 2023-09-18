@@ -90,7 +90,7 @@ async def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
     return {"Success": "New user is created"}
 
 
-@app.post("user/login/", response_model=dict)
+@app.post("/user/login/", response_model=dict)
 async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
 ):
