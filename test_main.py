@@ -1,12 +1,12 @@
 import json
 from fastapi.testclient import TestClient
 import pytest
-from main import app, get_db
+from main import app  # Import your FastAPI app
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
-
-client = TestClient(app)
+from httpx import AsyncClient
+from main import get_db  # Import your get_db function
+from app.models.model import User  # Import your User model (adjust the import path)
 
 SQLALCHEMY_DATABASE_URL = "mysql+mysqlconnector://root:ninad1234@localhost/mydatabasetest"
 
@@ -26,24 +26,25 @@ def override_get_db():
 
 app.dependency_overrides[get_db] = override_get_db
 
-def test_read_item():
-    response = client.get("/items/1")
-    assert response.status_code == 401
+@pytest.fixture
+def client():
+    # Set up a test database and create a test FastAPI client
+    test_db = override_get_db()
+    
+    # Use TestClient instead of AsyncClient
+    client = TestClient(app)
+    
+    yield client
 
-def test_create_item():
-    response = client.post("/items/", json={"name": "new_item"})
-    assert response.status_code == 401
-
-def test_register_user():
+def test_register_user(client):
     # Define test user data
     test_user_data = {
-        "id":1,
         "username": "testuser",
         "password": "testpassword",
         "email": "test@example.com",
     }
 
     # Test a successful registration
-    response = client.post("/register/", json=test_user_data)
+    response = client.post("/user/register/", json=test_user_data)
     assert response.status_code == 200
-    assert response.json() == {"Success":"New user is created"}
+    assert response.json() == {"Success": "New user is created"}

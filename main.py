@@ -64,7 +64,7 @@ def create_access_token(data: dict):
         print(SECRET_KEY)
 
 
-@app.post("user/register/")
+@app.post("/user/register/")
 async def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
     # Check if the username or email is already in use
     existing_user = (
