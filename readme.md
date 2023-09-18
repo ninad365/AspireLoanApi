@@ -36,7 +36,7 @@ Create a .env file. There is an example .env file in root folder
 
 ## Running the Application
 
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn main:app --reload
 
 ## API Documentation
 

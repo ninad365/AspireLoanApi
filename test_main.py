@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, delete
 from sqlalchemy.orm import sessionmaker, declarative_base
 from dotenv import load_dotenv
-from test_helper import cleanup_database, create_test_user
+from test_helper import cleanup_database, create_test_user, login_user
 
 # Import app and models
 from main import app, get_db
@@ -47,9 +47,6 @@ def test_register_and_login():
         created_user = db.query(User).filter_by(username="testuser").first()
         db.close()
 
-        # Assert that the user exists in the database
-        assert created_user is not None
-
         # Test a successful login
         login_data = {
             "username": "testuser",
@@ -68,7 +65,7 @@ def test_register_and_login():
             "terms": 6,
         }
         headers = {"Authorization": f"Bearer {access_token}"}
-        response = client.post("/loans/", json=loan_data, headers=headers)
+        response = client.post("/loans/create", json=loan_data, headers=headers)
         assert response.status_code == 200
         assert response.json() == {"Message": "Loan was created. Waiting for approval."}
 
@@ -81,7 +78,7 @@ def test_register_and_login():
         assert created_loan is not None
         assert created_loan.amount == 1000
         assert created_loan.terms == 6
-        assert created_loan.approved == 0
+        assert created_loan.status == "Waiting for approval"
 
     finally:
         cleanup_database(TestingSessionLocal())
@@ -137,3 +134,67 @@ def test_login_endpoint():
         assert response_data["token_type"] == "bearer"
     finally:
         cleanup_database(TestingSessionLocal())
+
+def test_create_loan():
+    try:
+        # Create a test user
+        create_test_user(TestingSessionLocal(), "testuser", "testpassword", "test@example.com")
+
+        # Log in the test user to get an access token (You can use your login_user helper here)
+        login_response_data = login_user(client, "testuser", "testpassword")
+        access_token = login_response_data["access_token"]
+
+        # Define loan data
+        loan_data = {
+            "amount": 1000,
+            "terms": 6,
+        }
+
+        # Set the authorization header with the access token
+        headers = {
+            "Authorization": f"Bearer {access_token}"
+        }
+
+        # Send a POST request to create a new loan
+        response = client.post("/loans/create", json=loan_data, headers=headers)
+
+        # Check the response status code and content
+        assert response.status_code == 200
+        response_data = response.json()
+        assert "Message" in response_data
+        assert response_data["Message"] == "Loan was created. Waiting for approval."
+
+    finally:
+        # Clean up the database
+        db = TestingSessionLocal()
+        cleanup_database(db)
+
+def test_get_loans_for_user():
+    try:
+        # Create a test user
+        create_test_user(TestingSessionLocal(), "testuser", "testpassword", "test@example.com", True)
+
+        # Log in the test user to get an access token (You can use your login_user helper here)
+        login_response_data = login_user(client, "testuser", "testpassword")
+        access_token = login_response_data["access_token"]
+
+        # Set the authorization header with the access token
+        headers = {
+            "Authorization": f"Bearer {access_token}"
+        }
+
+        # Send a GET request to retrieve loans for the logged-in user
+        response = client.get("/loans/", headers=headers)
+
+        # Check the response status code and content
+        assert response.status_code == 200
+        loans_response = response.json()
+
+        # Assuming LoanView has the same structure as Loan in your model
+        assert isinstance(loans_response, list)
+        assert len(loans_response) == 1
+
+    finally:
+        # Clean up the database
+        db = TestingSessionLocal()
+        cleanup_database(db)

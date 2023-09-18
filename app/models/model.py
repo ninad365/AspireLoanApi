@@ -21,9 +21,10 @@ class Loan(Base):
     amount = Column(Integer)
     terms = Column(Integer)
     start_date = Column(DateTime, default=func.now())
-    approved = Column(Integer)
+    status = Column(String(255))
     user_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("User", back_populates="loans")
+    payment_status = relationship("PaymentTerm", back_populates="loan")
 
 class PaymentTerm(Base):
     __tablename__ = "payment_status"
@@ -33,6 +34,9 @@ class PaymentTerm(Base):
     payment_status = Column(String(255))
     user_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("User", back_populates="payment_status")
+    loan_id = Column(Integer, ForeignKey("loans.id"))
+    loan = relationship("Loan", back_populates="payment_status")
+
 
 class UserCreate(BaseModel):
     username: str
@@ -51,7 +55,7 @@ class LoanView(BaseModel):
     id: int
     amount: int
     terms: int
-    approved: int
+    status: str
     user_id: int
 
 class UserLogin(BaseModel):
