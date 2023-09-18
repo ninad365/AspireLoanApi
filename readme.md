@@ -1,43 +1,48 @@
-Aspire Loan App
+# Aspire Loan App
 
-Prerequisites
+## Prerequisites
 
-Python (>=3.x)
+Python (>=3.8)
+
 pip (Python package manager)
+
 MySQL
 
-Run the sql script in MySQL to set up the database
-Database/Upgrade 1.sql
+## Installation
 
-Installation
+### Run the following command in the terminal to clone the repository:
 
-# Clone the repository
-git clone https://github.com/yourusername/your-application.git
+git clone [https://github.com/ninad365/AspireLoanApi.git](https://github.com/ninad365/AspireLoanApi.git)
 
-# Navigate to the project directory
+### Navigate to the project directory:
+
 cd your-application
 
-# Create a virtual environment (recommended)
-python -m venv venv
+### Create a virtual environment (recommended):
 
-# Activate the virtual environment (on macOS/Linux)
+python -m venv env
+
+### Activate the virtual environment (on macOS/Linux):
 source venv/bin/activate
 
-# Install dependencies
+### Install dependencies:
 pip install -r requirements.txt
 
+### Run the following sql script from the following file in MySQL to set up the database:
+
+Database/Upgrade 1.sql
 
 Create a .env file. There is an example .env file in root folder
 
-Running the Application
+## Running the Application
 
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
-API Documentation
+## API Documentation
 
 Visit http://127.0.0.1:8000/docs
 
-Testing
+## Testing
 
-# Run tests using pytest
+### Run tests using following command:
 pytest
