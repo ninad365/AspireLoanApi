@@ -1,6 +1,6 @@
 from sqlalchemy import delete
 from sqlalchemy.orm import Session
-from app.models.model import User, Loan  # Import your User and Loan models
+from ..app.models.model import User, Loan  # Import your User and Loan models
 
 def cleanup_database(db: Session):
     # Delete all records from the User and Loan tables to clean up the database

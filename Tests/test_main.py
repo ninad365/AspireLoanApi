@@ -4,11 +4,11 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, delete
 from sqlalchemy.orm import sessionmaker, declarative_base
 from dotenv import load_dotenv
-from test_helper import cleanup_database, create_test_user, login_user
+from .test_helper import cleanup_database, create_test_user, login_user
 
 # Import app and models
-from main import app, get_db
-from app.models.model import User, Loan
+from ..main import app, get_db
+from ..app.models.model import User, Loan
 
 load_dotenv()
 SQLALCHEMY_DATABASE_URL = os.environ.get("TEST_DATABASE_URL")

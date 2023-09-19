@@ -4,7 +4,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 import jwt
 import os
-from app.models.model import (
+from .app.models.model import (
     LoanApprove,
     LoanCreate,
     LoanView,
@@ -13,7 +13,7 @@ from app.models.model import (
     Loan,
     UserCreate,
 )
-from app.db import SessionLocal
+from .app.db import SessionLocal
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 
