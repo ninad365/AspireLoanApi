@@ -42,7 +42,7 @@ Create a .env file. There is an example .env file in the root folder
 
 ### Running the Application
 
-uvicorn main:app --reload
+uvicorn app.main:app --reload
 
 ### API Documentation
 
