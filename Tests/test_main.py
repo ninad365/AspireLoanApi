@@ -9,8 +9,8 @@ from .test_helper import cleanup_database, create_test_user, login_user
 from datetime import datetime, timedelta
 
 # Import app and models
-from ..main import app, get_db
-from ..app.models.model import PaymentTerm, User, Loan
+from app.main import app, get_db
+from app.models.model import PaymentTerm, User, Loan
 
 load_dotenv()
 SQLALCHEMY_DATABASE_URL = os.environ.get("TEST_DATABASE_URL")
