@@ -8,6 +8,7 @@ from .app.models.model import (
     LoanApprove,
     LoanCreate,
     LoanView,
+    MakePayment,
     PaymentTerm,
     User,
     Loan,
@@ -203,7 +204,7 @@ async def get_loans_for_user(loan_data: LoanApprove,
             db.commit()
             return {"message": "Loan status updated successfully."}
     else:
-        return {"error":"User is not permitted."}
+        return {"message":"User is not permitted."}
     
 
 # Endpoint to get pending payments with the earliest due date
@@ -238,19 +239,18 @@ async def get_pending_payments_with_earliest_due_date(
     
 @app.post("/payments/make-payment/")
 async def make_payment(
-    payment_id: int,
-    amount: float,
+    payment_data: MakePayment,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     # Retrieve the payment record from the database
-    payment = db.query(PaymentTerm).filter(PaymentTerm.user_id == current_user["id"]).filter(PaymentTerm.id == payment_id).first()
+    payment = db.query(PaymentTerm).filter(PaymentTerm.user_id == current_user["id"]).filter(PaymentTerm.id == payment_data.payment_id).first()
 
     if not payment:
         raise HTTPException(status_code=404, detail="Payment not found")
 
     # Check if the payment amount is greater than or equal to the due amount
-    if amount >= payment.amount:
+    if payment_data.amount >= payment.amount:
         # Mark the payment as paid
         payment.payment_status = "Paid"
         db.commit()

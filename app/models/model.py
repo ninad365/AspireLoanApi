@@ -3,7 +3,7 @@ from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-from ...app.db import Base
+from ..db import Base
 
 class User(Base):
     __tablename__ = "users"
@@ -61,3 +61,7 @@ class LoanView(BaseModel):
 class UserLogin(BaseModel):
     username: str
     password: str
+
+class MakePayment(BaseModel):
+    payment_id: int
+    amount: float
